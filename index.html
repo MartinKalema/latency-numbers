@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <title>Latency Numbers Every Programmer Should Know (2025 Update)</title>
     <style>
         * {
@@ -68,9 +67,7 @@
         }
         
         .metric {
-            display: grid;
-            grid-template-columns: minmax(250px, 1fr) 150px auto;
-            gap: 20px;
+            display: flex;
             align-items: center;
             padding: 15px;
             margin-bottom: 15px;
@@ -78,12 +75,17 @@
             border-radius: 10px;
             transition: all 0.3s ease;
             cursor: pointer;
+            gap: 20px;
         }
         
         .metric:hover {
             background: #edf2f7;
             transform: translateX(5px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .metric-info {
+            min-width: 300px;
         }
         
         .metric-name {
@@ -95,41 +97,26 @@
         .metric-value {
             color: #4a5568;
             font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 1.1em;
-            font-weight: 500;
+            font-size: 0.95em;
+            margin-top: 5px;
         }
         
         .bar-container {
-            position: relative;
+            flex: 1;
             height: 30px;
             background: #e2e8f0;
             border-radius: 15px;
             overflow: hidden;
+            position: relative;
         }
         
         .bar {
             height: 100%;
             border-radius: 15px;
             transition: width 0.5s ease;
-            position: relative;
-            overflow: hidden;
-            min-width: 2px; /* Ensure bars are always visible */
-        }
-        
-        .bar::after {
-            content: '';
             position: absolute;
-            top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            top: 0;
         }
         
         .source {
@@ -137,24 +124,11 @@
             color: #a0aec0;
             margin-top: 5px;
             font-style: italic;
+            display: none;
         }
         
-        .tooltip {
-            position: absolute;
-            padding: 10px 15px;
-            background: #2d3748;
-            color: white;
-            border-radius: 8px;
-            font-size: 0.9em;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .tooltip.show {
-            opacity: 1;
+        .metric:hover .source {
+            display: block;
         }
         
         .scale-note {
@@ -200,6 +174,21 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
+        .scale-description {
+            margin-left: 15px;
+            color: #718096;
+            font-size: 0.9em;
+        }
+        
+        .scale-example {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.85em;
+            color: #4a5568;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -210,8 +199,12 @@
             }
             
             .metric {
-                grid-template-columns: 1fr;
-                gap: 10px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .metric-info {
+                min-width: auto;
             }
             
             .bar-container {
@@ -223,7 +216,7 @@
 <body>
     <div class="container">
         <h1>Latency Numbers Every Programmer Should Know</h1>
-        <p class="subtitle">2025 Update - Interactive visualization of computer latency at different scales. Based on data from Google SRE, ByteByteGo, Thundergolfer, and other sources.</p>
+        <p class="subtitle">2025 Update - Interactive visualization of computer latency at different scales. Hover over metrics to see data sources.</p>
         
         <div class="comparison-mode">
             <label for="scale-select">View Scale:</label>
@@ -232,52 +225,51 @@
                 <option value="log">Logarithmic Scale</option>
                 <option value="relative">Relative to L1 Cache</option>
             </select>
-            <span id="scale-description" style="margin-left: 15px; color: #718096; font-size: 0.9em;"></span>
+            <span class="scale-description" id="scale-description"></span>
+            <div class="scale-example" id="scale-example"></div>
         </div>
         
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-box" style="background: #764ba2;"></div>
-                <span>Nanoseconds (ns)</span>
+                <span>Nanoseconds (ns) - Under 1 microsecond</span>
             </div>
             <div class="legend-item">
                 <div class="legend-box" style="background: #ed64a6;"></div>
-                <span>Microseconds (μs)</span>
+                <span>Microseconds (μs) - Under 1 millisecond</span>
             </div>
             <div class="legend-item">
                 <div class="legend-box" style="background: #ed8936;"></div>
-                <span>Milliseconds (ms)</span>
+                <span>Milliseconds (ms) - Over 1 millisecond</span>
             </div>
         </div>
         
         <div id="metrics-container"></div>
         
         <div class="scale-note">
-            <p><strong>Note:</strong> Click on any metric to see detailed comparison. Values represent typical 2025 hardware.</p>
+            <p><strong>Note:</strong> The colored bars show relative speed. Watch how they change with different scales!</p>
             <p>1 second = 1,000 milliseconds = 1,000,000 microseconds = 1,000,000,000 nanoseconds</p>
         </div>
     </div>
-    
-    <div class="tooltip" id="tooltip"></div>
 
     <script>
         const latencyData2025 = [
-            { name: 'L1 Cache Reference', ns: 1, source: 'Average from Google SRE, ByteByteGo, SamWho (0.5-1 ns)', category: 'cache' },
-            { name: 'Branch Mispredict', ns: 5, source: 'Thundergolfer (5 ns), Google SRE (3 ns)', category: 'cpu' },
-            { name: 'L2 Cache Reference', ns: 7, source: 'Thundergolfer (7 ns), ByteByteGo (10 ns)', category: 'cache' },
-            { name: 'Mutex Lock/Unlock', ns: 25, source: 'Thundergolfer (25 ns), Google SRE (17 ns)', category: 'cpu' },
-            { name: 'Main Memory Reference', ns: 100, source: 'Napkin Math (50 ns), others (100 ns)', category: 'memory' },
-            { name: 'System Call', ns: 500, source: 'Napkin Math (500 ns), Thundergolfer (105 ns)', category: 'system' },
-            { name: 'Compress 1KB with Zippy', ns: 3000, source: 'Thundergolfer/Google SRE (2-3 μs)', category: 'cpu' },
-            { name: 'Context Switch', ns: 10000, source: 'Napkin Math (10 μs), Thundergolfer (4 μs)', category: 'system' },
-            { name: 'Send 2KB over 10Gbps Network', ns: 1600, source: 'Google SRE (1.6 μs), Thundergolfer (20 μs for 1Gbps)', category: 'network' },
-            { name: 'SSD Random Read (4-8KB)', ns: 100000, source: 'ByteByteGo (100 μs), SamWho (150 μs)', category: 'storage' },
-            { name: 'Read 1MB from Memory', ns: 250000, source: 'Thundergolfer (250 μs), Google SRE (10 μs)', category: 'memory' },
-            { name: 'Datacenter Round Trip', ns: 500000, source: 'Google SRE/SamWho (0.5 ms)', category: 'network' },
-            { name: 'Read 1MB from SSD', ns: 1000000, source: 'Thundergolfer/Google SRE (1 ms)', category: 'storage' },
-            { name: 'HDD Disk Seek', ns: 10000000, source: 'Thundergolfer/Google SRE (10 ms)', category: 'storage' },
-            { name: 'Read 1MB from HDD', ns: 20000000, source: 'Thundergolfer (20 ms)', category: 'storage' },
-            { name: 'WAN Round Trip (CA-EU)', ns: 150000000, source: 'Thundergolfer/SamWho (150 ms)', category: 'network' }
+            { name: 'L1 Cache Reference', ns: 1, source: 'Average from Google SRE, ByteByteGo, SamWho (0.5-1 ns)' },
+            { name: 'Branch Mispredict', ns: 5, source: 'Thundergolfer (5 ns), Google SRE (3 ns)' },
+            { name: 'L2 Cache Reference', ns: 7, source: 'Thundergolfer (7 ns), ByteByteGo (10 ns)' },
+            { name: 'Mutex Lock/Unlock', ns: 25, source: 'Thundergolfer (25 ns), Google SRE (17 ns)' },
+            { name: 'Main Memory Reference', ns: 100, source: 'Napkin Math (50 ns), others (100 ns)' },
+            { name: 'System Call', ns: 500, source: 'Napkin Math (500 ns), Thundergolfer (105 ns)' },
+            { name: 'Compress 1KB with Zippy', ns: 3000, source: 'Thundergolfer/Google SRE (2-3 μs)' },
+            { name: 'Context Switch', ns: 10000, source: 'Napkin Math (10 μs), Thundergolfer (4 μs)' },
+            { name: 'Send 2KB over 10Gbps Network', ns: 1600, source: 'Google SRE (1.6 μs), Thundergolfer (20 μs for 1Gbps)' },
+            { name: 'SSD Random Read (4-8KB)', ns: 100000, source: 'ByteByteGo (100 μs), SamWho (150 μs)' },
+            { name: 'Read 1MB from Memory', ns: 250000, source: 'Thundergolfer (250 μs), Google SRE (10 μs)' },
+            { name: 'Datacenter Round Trip', ns: 500000, source: 'Google SRE/SamWho (0.5 ms)' },
+            { name: 'Read 1MB from SSD', ns: 1000000, source: 'Thundergolfer/Google SRE (1 ms)' },
+            { name: 'HDD Disk Seek', ns: 10000000, source: 'Thundergolfer/Google SRE (10 ms)' },
+            { name: 'Read 1MB from HDD', ns: 20000000, source: 'Thundergolfer (20 ms)' },
+            { name: 'WAN Round Trip (CA-EU)', ns: 150000000, source: 'Thundergolfer/SamWho (150 ms)' }
         ];
 
         function formatNs(ns) {
@@ -299,53 +291,45 @@
             
             switch(mode) {
                 case 'log':
-                    // Logarithmic scale for better visibility across orders of magnitude
+                    // Logarithmic scale - all values visible
                     if (ns === 0) return 0;
                     const logMin = Math.log10(minNs);
                     const logMax = Math.log10(maxNs);
                     const logValue = Math.log10(ns);
-                    return Math.max(2, ((logValue - logMin) / (logMax - logMin)) * 100);
+                    return ((logValue - logMin) / (logMax - logMin)) * 100;
                     
                 case 'relative':
-                    // Show relative to L1 cache on a log scale
-                    const relative = ns / latencyData2025[0].ns;
-                    if (relative === 1) return 5; // L1 cache gets minimal width
-                    const logRelative = Math.log10(relative);
-                    const maxLogRelative = Math.log10(maxNs / latencyData2025[0].ns);
-                    return Math.max(5, (logRelative / maxLogRelative) * 100);
+                    // Everything relative to L1 cache
+                    const l1 = latencyData2025[0].ns;
+                    const ratio = ns / l1;
+                    if (ratio === 1) return 2; // L1 cache gets minimal width
+                    // Use log scale of the ratio for better visibility
+                    const logRatio = Math.log10(ratio);
+                    const maxLogRatio = Math.log10(maxNs / l1);
+                    return (logRatio / maxLogRatio) * 100;
                     
                 default: // linear
-                    // Linear scale - make small values visible with minimum width
-                    const percentage = (ns / maxNs) * 100;
-                    return Math.max(0.5, percentage); // Minimum 0.5% width so smallest values are visible
+                    // True proportional scale
+                    return (ns / maxNs) * 100;
             }
         }
 
-        function humanizeComparison(ns) {
-            const l1 = latencyData2025[0].ns;
-            const ratio = ns / l1;
-            
-            if (ratio === 1) return "baseline";
-            if (ratio < 100) return `${ratio.toFixed(0)}x slower`;
-            if (ratio < 1000) return `${ratio.toFixed(0)}x slower`;
-            if (ratio < 1000000) return `${(ratio/1000).toFixed(1)}K times slower`;
-            if (ratio < 1000000000) return `${(ratio/1000000).toFixed(1)}M times slower`;
-            return `${(ratio/1000000000).toFixed(1)}B times slower`;
-        }
-
-        let metricsRendered = false;
-
         function updateScaleDescription(mode) {
             const desc = document.getElementById('scale-description');
+            const example = document.getElementById('scale-example');
+            
             switch(mode) {
                 case 'log':
-                    desc.textContent = '(Better visibility across orders of magnitude)';
+                    desc.textContent = '(All operations visible, compressed scale)';
+                    example.innerHTML = '<strong>Example:</strong> L1 Cache and WAN Round Trip both fit on screen despite 150,000,000x difference';
                     break;
                 case 'relative':
-                    desc.textContent = '(Everything compared to L1 cache speed)';
+                    desc.textContent = '(Shows how many times slower than L1 cache)';
+                    example.innerHTML = '<strong>Example:</strong> Main Memory is 100x slower, WAN is 150,000,000x slower than L1 cache';
                     break;
                 default:
-                    desc.textContent = '(Actual proportional differences)';
+                    desc.textContent = '(Shows true proportions - tiny operations barely visible)';
+                    example.innerHTML = '<strong>Example:</strong> L1 Cache (1ns) is 0.0000007% of WAN Round Trip (150ms)';
             }
         }
 
@@ -355,38 +339,23 @@
             
             updateScaleDescription(scaleMode);
             
-            // If metrics already exist, just update the bars
-            if (metricsRendered) {
-                const bars = container.querySelectorAll('.bar');
-                console.log(`Updating ${bars.length} bars to ${scaleMode} scale`);
-                latencyData2025.forEach((data, index) => {
-                    if (bars[index]) {
-                        const newWidth = getScaledWidth(data.ns, scaleMode);
-                        bars[index].style.width = newWidth + '%';
-                        console.log(`${data.name}: ${newWidth.toFixed(2)}%`);
-                    }
-                });
-                return;
-            }
-
-            // First render - create all elements
+            // Clear and rebuild
             container.innerHTML = '';
-            metricsRendered = true;
 
             latencyData2025.forEach((data, index) => {
                 const metricDiv = document.createElement('div');
                 metricDiv.className = 'metric';
                 
-                const nameDiv = document.createElement('div');
-                nameDiv.innerHTML = `
+                // Info section
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'metric-info';
+                infoDiv.innerHTML = `
                     <div class="metric-name">${data.name}</div>
+                    <div class="metric-value">${formatNs(data.ns)}</div>
                     <div class="source">${data.source}</div>
                 `;
                 
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'metric-value';
-                valueDiv.textContent = formatNs(data.ns);
-                
+                // Bar visualization
                 const barContainer = document.createElement('div');
                 barContainer.className = 'bar-container';
                 
@@ -394,65 +363,35 @@
                 bar.className = 'bar';
                 bar.style.backgroundColor = getBarColor(data.ns);
                 bar.style.width = '0%';
-                bar.setAttribute('data-index', index);
                 
+                // Animate bar after a short delay
                 setTimeout(() => {
                     bar.style.width = getScaledWidth(data.ns, scaleMode) + '%';
-                }, index * 50);
+                }, 50 + index * 30);
                 
                 barContainer.appendChild(bar);
                 
-                metricDiv.appendChild(nameDiv);
-                metricDiv.appendChild(valueDiv);
+                metricDiv.appendChild(infoDiv);
                 metricDiv.appendChild(barContainer);
-                
-                metricDiv.addEventListener('click', () => {
-                    showComparison(data);
-                });
-                
-                metricDiv.addEventListener('mouseenter', (e) => {
-                    const tooltip = document.getElementById('tooltip');
-                    tooltip.textContent = `${humanizeComparison(data.ns)} than L1 cache`;
-                    tooltip.classList.add('show');
-                });
-                
-                metricDiv.addEventListener('mousemove', (e) => {
-                    const tooltip = document.getElementById('tooltip');
-                    tooltip.style.left = e.pageX + 10 + 'px';
-                    tooltip.style.top = e.pageY - 30 + 'px';
-                });
-                
-                metricDiv.addEventListener('mouseleave', () => {
-                    const tooltip = document.getElementById('tooltip');
-                    tooltip.classList.remove('show');
-                });
-                
                 container.appendChild(metricDiv);
             });
         }
 
-        function showComparison(selected) {
-            const comparisons = latencyData2025.map(data => ({
-                name: data.name,
-                ratio: selected.ns / data.ns,
-                faster: selected.ns > data.ns
-            })).filter(c => c.ratio !== 1);
+        // Update bars when scale changes
+        function updateBars() {
+            const scaleMode = document.getElementById('scale-select').value;
+            updateScaleDescription(scaleMode);
             
-            let message = `${selected.name} (${formatNs(selected.ns)}) compared to:\n\n`;
-            
-            comparisons.forEach(comp => {
-                if (comp.faster) {
-                    message += `• ${comp.ratio.toFixed(1)}x slower than ${comp.name}\n`;
-                } else {
-                    message += `• ${(1/comp.ratio).toFixed(1)}x faster than ${comp.name}\n`;
+            const bars = document.querySelectorAll('.bar');
+            latencyData2025.forEach((data, index) => {
+                if (bars[index]) {
+                    bars[index].style.width = getScaledWidth(data.ns, scaleMode) + '%';
                 }
             });
-            
-            console.log(message);
         }
 
-        document.getElementById('scale-select').addEventListener('change', renderMetrics);
-        
+        // Initialize
+        document.getElementById('scale-select').addEventListener('change', updateBars);
         renderMetrics();
     </script>
 </body>
