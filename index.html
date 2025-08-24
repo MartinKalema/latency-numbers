@@ -231,6 +231,7 @@
                 <option value="log">Logarithmic Scale</option>
                 <option value="relative">Relative to L1 Cache</option>
             </select>
+            <span id="scale-description" style="margin-left: 15px; color: #718096; font-size: 0.9em;"></span>
         </div>
         
         <div class="legend">
@@ -293,19 +294,29 @@
 
         function getScaledWidth(ns, mode) {
             const maxNs = Math.max(...latencyData2025.map(d => d.ns));
+            const minNs = Math.min(...latencyData2025.map(d => d.ns));
             
             switch(mode) {
                 case 'log':
-                    const logMin = Math.log10(1);
+                    // Logarithmic scale for better visibility across orders of magnitude
+                    if (ns === 0) return 0;
+                    const logMin = Math.log10(minNs);
                     const logMax = Math.log10(maxNs);
                     const logValue = Math.log10(ns);
-                    return ((logValue - logMin) / (logMax - logMin)) * 100;
+                    return Math.max(2, ((logValue - logMin) / (logMax - logMin)) * 100);
+                    
                 case 'relative':
+                    // Show relative to L1 cache on a log scale
                     const relative = ns / latencyData2025[0].ns;
-                    const maxRelative = maxNs / latencyData2025[0].ns;
-                    return Math.min((Math.log10(relative) / Math.log10(maxRelative)) * 100, 100);
+                    if (relative === 1) return 5; // L1 cache gets minimal width
+                    const logRelative = Math.log10(relative);
+                    const maxLogRelative = Math.log10(maxNs / latencyData2025[0].ns);
+                    return Math.max(5, (logRelative / maxLogRelative) * 100);
+                    
                 default: // linear
-                    return (ns / maxNs) * 100;
+                    // Linear scale - make small values visible with minimum width
+                    const percentage = (ns / maxNs) * 100;
+                    return Math.max(0.5, percentage); // Minimum 0.5% width so smallest values are visible
             }
         }
 
@@ -321,10 +332,42 @@
             return `${(ratio/1000000000).toFixed(1)}B times slower`;
         }
 
+        let metricsRendered = false;
+
+        function updateScaleDescription(mode) {
+            const desc = document.getElementById('scale-description');
+            switch(mode) {
+                case 'log':
+                    desc.textContent = '(Better visibility across orders of magnitude)';
+                    break;
+                case 'relative':
+                    desc.textContent = '(Everything compared to L1 cache speed)';
+                    break;
+                default:
+                    desc.textContent = '(Actual proportional differences)';
+            }
+        }
+
         function renderMetrics() {
             const container = document.getElementById('metrics-container');
             const scaleMode = document.getElementById('scale-select').value;
+            
+            updateScaleDescription(scaleMode);
+            
+            // If metrics already exist, just update the bars
+            if (metricsRendered) {
+                const bars = container.querySelectorAll('.bar');
+                latencyData2025.forEach((data, index) => {
+                    if (bars[index]) {
+                        bars[index].style.width = getScaledWidth(data.ns, scaleMode) + '%';
+                    }
+                });
+                return;
+            }
+
+            // First render - create all elements
             container.innerHTML = '';
+            metricsRendered = true;
 
             latencyData2025.forEach((data, index) => {
                 const metricDiv = document.createElement('div');
@@ -347,6 +390,7 @@
                 bar.className = 'bar';
                 bar.style.background = getBarColor(data.ns);
                 bar.style.width = '0%';
+                bar.setAttribute('data-index', index);
                 
                 setTimeout(() => {
                     bar.style.width = getScaledWidth(data.ns, scaleMode) + '%';
