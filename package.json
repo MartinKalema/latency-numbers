@@ -1,0 +1,25 @@
+{
+  "name": "latency-numbers-2025",
+  "version": "1.0.0",
+  "description": "Interactive visualization of latency numbers every programmer should know (2025 Update)",
+  "main": "index.html",
+  "scripts": {
+    "serve": "python3 -m http.server 8000",
+    "deploy": "gh-pages -d ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/latency-numbers-2025.git"
+  },
+  "keywords": [
+    "latency",
+    "performance",
+    "visualization",
+    "d3js"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "gh-pages": "^6.1.1"
+  }
+}
