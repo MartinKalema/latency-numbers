@@ -14,7 +14,7 @@
         body {
             font-family: 'Courier New', Courier, monospace;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
             min-height: 100vh;
         }
         
@@ -31,7 +31,7 @@
             color: #2d3748;
             margin-bottom: 10px;
             font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -163,7 +163,7 @@
             font-family: 'Courier New', Courier, monospace;
             font-weight: 600;
             background-color: #f7fafc;
-            background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns="http://www.w3.org/2000/svg" width="14" height="8" viewBox="0 0 14 8"%3e%3cpath fill="%23764ba2" d="M7 8L0 0h14z"/%3e%3c/svg%3e');
+            background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns="http://www.w3.org/2000/svg" width="14" height="8" viewBox="0 0 14 8"%3e%3cpath fill="%23475569" d="M7 8L0 0h14z"/%3e%3c/svg%3e');
             background-position: right 12px center;
             background-repeat: no-repeat;
             background-size: 14px;
@@ -181,7 +181,7 @@
         
         .comparison-mode select:focus {
             outline: none;
-            border-color: #764ba2;
+            border-color: #475569;
             background-color: #edf2f7;
         }
         
@@ -248,15 +248,15 @@
         
         <div class="legend">
             <div class="legend-item">
-                <div class="legend-box" style="background: #764ba2;"></div>
+                <div class="legend-box" style="background: #10b981;"></div>
                 <span>Nanoseconds (ns) - < 1 μs</span>
             </div>
             <div class="legend-item">
-                <div class="legend-box" style="background: #ed64a6;"></div>
+                <div class="legend-box" style="background: #f59e0b;"></div>
                 <span>Microseconds (μs) - < 1 ms</span>
             </div>
             <div class="legend-item">
-                <div class="legend-box" style="background: #ed8936;"></div>
+                <div class="legend-box" style="background: #dc2626;"></div>
                 <span>Milliseconds (ms) - > 1 ms</span>
             </div>
         </div>
@@ -297,9 +297,9 @@
         }
 
         function getBarColor(ns) {
-            if (ns >= 1e6) return '#ed8936'; // ms - orange
-            if (ns >= 1e3) return '#ed64a6'; // μs - pink  
-            return '#764ba2'; // ns - purple
+            if (ns >= 1e6) return '#dc2626'; // ms - red
+            if (ns >= 1e3) return '#f59e0b'; // μs - amber  
+            return '#10b981'; // ns - emerald green
         }
 
         function getScaledWidth(ns, mode) {
