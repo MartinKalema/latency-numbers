@@ -113,6 +113,7 @@
             transition: width 0.5s ease;
             position: relative;
             overflow: hidden;
+            min-width: 2px; /* Ensure bars are always visible */
         }
         
         .bar::after {
@@ -236,15 +237,15 @@
         
         <div class="legend">
             <div class="legend-item">
-                <div class="legend-box" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+                <div class="legend-box" style="background: #764ba2;"></div>
                 <span>Nanoseconds (ns)</span>
             </div>
             <div class="legend-item">
-                <div class="legend-box" style="background: linear-gradient(135deg, #f687b3, #ed64a6);"></div>
+                <div class="legend-box" style="background: #ed64a6;"></div>
                 <span>Microseconds (μs)</span>
             </div>
             <div class="legend-item">
-                <div class="legend-box" style="background: linear-gradient(135deg, #f6ad55, #ed8936);"></div>
+                <div class="legend-box" style="background: #ed8936;"></div>
                 <span>Milliseconds (ms)</span>
             </div>
         </div>
@@ -287,9 +288,9 @@
         }
 
         function getBarColor(ns) {
-            if (ns >= 1e6) return 'linear-gradient(135deg, #f6ad55, #ed8936)'; // ms - orange
-            if (ns >= 1e3) return 'linear-gradient(135deg, #f687b3, #ed64a6)'; // μs - pink
-            return 'linear-gradient(135deg, #667eea, #764ba2)'; // ns - purple
+            if (ns >= 1e6) return '#ed8936'; // ms - orange
+            if (ns >= 1e3) return '#ed64a6'; // μs - pink  
+            return '#764ba2'; // ns - purple
         }
 
         function getScaledWidth(ns, mode) {
@@ -388,7 +389,7 @@
                 
                 const bar = document.createElement('div');
                 bar.className = 'bar';
-                bar.style.background = getBarColor(data.ns);
+                bar.style.backgroundColor = getBarColor(data.ns);
                 bar.style.width = '0%';
                 bar.setAttribute('data-index', index);
                 
