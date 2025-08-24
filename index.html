@@ -358,9 +358,12 @@
             // If metrics already exist, just update the bars
             if (metricsRendered) {
                 const bars = container.querySelectorAll('.bar');
+                console.log(`Updating ${bars.length} bars to ${scaleMode} scale`);
                 latencyData2025.forEach((data, index) => {
                     if (bars[index]) {
-                        bars[index].style.width = getScaledWidth(data.ns, scaleMode) + '%';
+                        const newWidth = getScaledWidth(data.ns, scaleMode);
+                        bars[index].style.width = newWidth + '%';
+                        console.log(`${data.name}: ${newWidth.toFixed(2)}%`);
                     }
                 });
                 return;
