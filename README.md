@@ -4,7 +4,7 @@ An interactive visualization of computer latency at different scales, updated fo
 
 ## Live Demo
 
-Visit the live site: [https://yourusername.github.io/latency-numbers-2025](https://yourusername.github.io/latency-numbers-2025)
+Visit the live site: [https://martinkalema.github.io/latency-numbers](https://martinkalema.github.io/latency-numbers)
 
 ## Features
 
@@ -25,55 +25,6 @@ The visualization includes key latency metrics from nanoseconds to seconds:
 - **Storage Operations** (100 μs - 20 ms): SSD and HDD operations
 - **Network Operations** (1.6 μs - 150 ms): Datacenter and WAN round trips
 
-## Deployment
-
-This project automatically deploys to GitHub Pages when you push to the main branch.
-
-### Setup Instructions
-
-1. **Create a GitHub Repository**
-   ```bash
-   # Create a new repository on GitHub named "latency-numbers-2025"
-   # Then add the remote:
-   git remote add origin https://github.com/yourusername/latency-numbers-2025.git
-   ```
-
-2. **Update package.json**
-   - Replace `yourusername` in the repository URL with your GitHub username
-
-3. **Enable GitHub Pages**
-   - Go to Settings → Pages in your GitHub repository
-   - Under "Build and deployment", select "GitHub Actions" as the source
-
-4. **Push to GitHub**
-   ```bash
-   git add .
-   git commit -m "Initial commit: Latency numbers visualization"
-   git branch -M main
-   git push -u origin main
-   ```
-
-5. **Wait for Deployment**
-   - The GitHub Actions workflow will automatically deploy your site
-   - Check the Actions tab in your repository to monitor the deployment
-   - Your site will be available at `https://yourusername.github.io/latency-numbers-2025`
-
-## Local Development
-
-To run the project locally:
-
-```bash
-# Using Python (included in package.json)
-npm run serve
-
-# Or directly with Python
-python3 -m http.server 8000
-
-# Or with any other static server
-npx serve .
-```
-
-Then open http://localhost:8000 in your browser.
 
 ## Data Sources
 
